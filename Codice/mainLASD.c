@@ -1,9 +1,9 @@
-//#include <ProgettoLASD.h>
+#include <ProgettoLASD.h>
 #include <stdio.h>
 
 
 int main() {
-	//utente User[50];
+	utente User;
 	int scelta;
 	
 	printf("***************** PROGETTO LASD *****************\n            GIORGIO LONGOBARDO N86003571                 \n");
@@ -14,4 +14,11 @@ int main() {
 		printf("\nNumero non valido. Inserire scelta: ");
 		scanf("%d", &scelta);
 	}
+
+	if(scelta == 1) User = signup();
+	
+	else if(scelta == 0) User = login();	
+	
+	
+	printf("Ciao, %s, %s", User.username, User.password);
 }

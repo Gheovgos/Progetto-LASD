@@ -1,0 +1,138 @@
+#include <liste.h>
+#include <string.h>
+//#include <lasd.h>
+
+/*FILE HEADER DI DEFINIZIONE UTENTE, STRUTTURE DATI E FUNZIONI*/
+
+//Definizione di Utente
+typedef struct User{
+	char username[50]; 
+	char password[50]; 
+	float saldo;
+	int isSU; //indica se è un Super User (Admin)
+	//nodiAlbero carrello;
+}utente;
+
+//Definizione di un prodotto
+typedef struct Prodotto{
+	char nomeProdotto[50]; 
+	float costo;
+	int taglia;
+	utente inAttesa[]; //allocazione dinamica di un vettore utenti che attendono un determinato prodotto di una determinata taglia
+}prodotto;
+
+//Definizione di un ABR di prodotti
+typedef struct ABR{
+	prodotto prodottoN;
+	struct ABR* dx;
+	struct ABR* sx;
+}ABRprodotti;
+
+
+utente login(); //Funzione di accesso di un Utente
+utente signup(); //funzione di registrazione di un utente
+
+utente login() {
+	utente User;
+	FILE *f;
+	char stringa[100], usernm[50], psswd[50];
+	int c = 0;
+	
+	printf("Inserire username: ");
+	fflush(stdin);
+	gets(usernm);
+	
+	printf("Inserire password: ");
+	fflush(stdin);
+	gets(psswd);
+	
+	for(int i = 0; usernm[i] != '\0'; i++) {
+		stringa[c] = usernm[i];
+		c++;
+	}
+	for(int i = 0; psswd[i] != '\0'; i++) {
+		stringa[c] = psswd[i];
+		c++;
+	}
+	c = 0;
+	
+	f = fopen("utenti.txt", "r");
+	if(f == NULL) {
+		printf("File di testo non trovato!");
+		return User;
+	}
+	
+	while(!feof(f)) {
+		char tmp[100];
+		fscanf(f, "%s\n", &tmp);
+		
+		if(!strcmp(tmp, stringa)) {
+			
+			strcpy(User.username, usernm);
+			strcpy(User.password, psswd);
+			User.saldo = 1000;
+			User.isSU = 0;
+			fclose(f);
+			printf("Login effettuato con successo!\n");
+			return User;
+			
+		}	
+	}
+	
+	printf("Utente non trovato!\n");
+	fclose(f);
+	return User;
+}
+
+utente signup() {
+	utente User;
+	FILE *f, *fp;
+	char stringa[100], usernm[50], psswd[50];
+	int c = 0;
+	
+	printf("Inserire username: ");
+	fflush(stdin);
+	gets(usernm);
+	
+	printf("Inserire password: ");
+	fflush(stdin);
+	gets(psswd);
+	
+	for(int i = 0; usernm[i] != '\0'; i++) {
+		stringa[c] = usernm[i];
+		c++;
+	}
+	for(int i = 0; psswd[i] != '\0'; i++) {
+		stringa[c] = psswd[i];
+		c++;
+	}
+	c = 0;
+	
+	f = fopen("utenti.txt", "a");
+	fp = fopen("utenti.txt", "r");
+	if(f == NULL) {
+		printf("File di testo non trovato!");
+		return User;
+	}
+	
+	while(!feof(fp)) {
+		char tmp[100];
+		fscanf(f, "%s\n", &tmp);
+		
+		if(!strcmp(tmp, stringa)) {	
+			printf("Username non disponibile!");
+			return User;	
+		}	
+	}
+	fclose(fp);
+	
+	fprintf(f, "\n%s", stringa);
+	fclose(f);
+	
+	strcpy(User.username, usernm);
+	strcpy(User.password, psswd);
+	User.saldo = 1000;
+	User.isSU = 0;
+
+	return User;
+}
