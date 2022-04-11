@@ -1,8 +1,10 @@
 #include <liste.h>
 #include <string.h>
+#include <stdlib.h>
 //#include <lasd.h>
 
 /*FILE HEADER DI DEFINIZIONE UTENTE, STRUTTURE DATI E FUNZIONI*/
+/*GIORGIO LONGOBARDO N86003571*/
 
 //Definizione di Utente
 typedef struct User{
@@ -15,7 +17,7 @@ typedef struct User{
 
 //Definizione di un prodotto
 typedef struct Prodotto{
-	char nomeProdotto[50]; 
+	char nomeProdotto[200]; 
 	float costo;
 	int taglia;
 	utente inAttesa[]; //allocazione dinamica di un vettore utenti che attendono un determinato prodotto di una determinata taglia
@@ -28,15 +30,24 @@ typedef struct ABR{
 	struct ABR* sx;
 }ABRprodotti;
 
+/*        PROTOTIPI FUNZIONE        */
 
 utente login(); //Funzione di accesso di un Utente
 utente signup(); //funzione di registrazione di un utente
+void menuAdmin(utente User); //funzione che mostra le opzioni possibili per un amministratore
+void menuUtente(utente User); //funzione che mostra le opzioni possibili per un utente
+ABRprodotti* aggiungiProdotto(ABRprodotti *ABR); //funzione che aggiunge un prodotto (nodo) nell'albero dei prodotti
+void ordinaABR(ABRprodotti *ABR); //Ordina l'albero ABR dei prodotti
+
+
+
+/*          DEFINIZIONE FUNZIONI           */
 
 utente login() {
 	utente User;
 	FILE *f;
 	char stringa[100], usernm[50], psswd[50];
-	int c = 0;
+	int c = 0, su;
 	
 	printf("Inserire username: ");
 	fflush(stdin);
@@ -65,13 +76,14 @@ utente login() {
 	while(!feof(f)) {
 		char tmp[100];
 		fscanf(f, "%s\n", &tmp);
+		fscanf(f, "%d\n", &su);
 		
 		if(!strcmp(tmp, stringa)) {
 			
 			strcpy(User.username, usernm);
 			strcpy(User.password, psswd);
 			User.saldo = 1000;
-			User.isSU = 0;
+			User.isSU = su;
 			fclose(f);
 			printf("Login effettuato con successo!\n");
 			return User;
@@ -88,7 +100,7 @@ utente signup() {
 	utente User;
 	FILE *f, *fp;
 	char stringa[100], usernm[50], psswd[50];
-	int c = 0;
+	int c = 0, su;
 	
 	printf("Inserire username: ");
 	fflush(stdin);
@@ -108,6 +120,7 @@ utente signup() {
 	}
 	c = 0;
 	
+	
 	f = fopen("utenti.txt", "a");
 	fp = fopen("utenti.txt", "r");
 	if(f == NULL) {
@@ -115,7 +128,7 @@ utente signup() {
 		return User;
 	}
 	
-	while(!feof(fp)) {
+	/*while(!feof(fp)) {
 		char tmp[100];
 		fscanf(f, "%s\n", &tmp);
 		
@@ -124,15 +137,88 @@ utente signup() {
 			return User;	
 		}	
 	}
-	fclose(fp);
+	fclose(fp);*/
+	
+		
+	printf("\nSei un amministratore?\n\n1 - Si'\n\n0 - No\n\nInserisci valore: ");
+	scanf("%d", &su);
+	
+	while(su != 0 && su != 1) {
+		printf("\nNumero non valido. Inserire scelta: ");
+		scanf("%d", &su);
+	}
 	
 	fprintf(f, "\n%s", stringa);
+	fprintf(f, "\n%d", su);
 	fclose(f);
 	
 	strcpy(User.username, usernm);
 	strcpy(User.password, psswd);
 	User.saldo = 1000;
-	User.isSU = 0;
+	User.isSU = su;
 
 	return User;
+}
+
+void menuAdmin(utente User) {
+	printf("****** MENU AMMINISTRATORE ******\n\n\n");
+	
+	int n, loop = 1;
+	ABRprodotti *ABR = NULL;
+	
+	while(loop) {
+	printf("Quale operazione vuole svolgere?\n\n0 - Aggiorna prodotto\n1 - Aggiungi prodotto\n2 - Mostra prodotti\n10 - Logout\n\n\nInserire valore: ");
+	scanf("%d", &n);
+	
+	while(n != 0 && n != 1 && n != 2 && n != 10) {
+		printf("\nNumero non valido. Inserire scelta: ");
+		scanf("%d", &n);
+	}
+	
+	
+		switch(n) {
+		case 0:
+			printf("Hai selezionato %d", n);
+			break;
+		case 1:
+			printf("Hai selezionato aggiungi prodotto");
+			ABR = aggiungiProdotto(ABR);
+			ordinaABR(ABR);
+			break;
+		case 2:
+			printf("Hai selezionato %d", n);
+			break;
+		case 10:
+			printf("Arrivederci!");
+			system(EXIT_SUCCESS);
+		}
+	}
+}
+
+ABRprodotti* aggiungiProdotto(ABRprodotti *ABR) {
+	if(ABR == NULL) {
+		ABRprodotti *tmp = (ABRprodotti*)malloc(sizeof(ABRprodotti));
+		
+		printf("\nAggiungi il nome del prodotto: ");
+		fflush(stdin);
+		gets(tmp->prodottoN.nomeProdotto);
+		
+		printf("\nInserire il costo: ");
+		fflush(stdin);
+		scanf("%d", &tmp->prodottoN.costo);
+		while(tmp->prodottoN.costo < 0) {
+			printf("\nIl costo non puo' essere negativo!\nInserire un costo valido: ");
+			fflush(stdin);
+			scanf("%d", &tmp->prodottoN.costo);		
+		}
+		
+		printf("\nInserire la taglia: ");
+		fflush(stdin);
+		scanf("%d", &tmp->prodottoN.taglia);
+		
+		return tmp;	
+	}
+	else {
+		ABR = aggiungiProdotto(ABR->sx);
+	}
 }

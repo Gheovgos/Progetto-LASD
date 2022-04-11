@@ -20,5 +20,8 @@ int main() {
 	else if(scelta == 0) User = login();	
 	
 	
-	printf("Ciao, %s, %s", User.username, User.password);
+	printf("Ciao, %s\n\n", User.username);
+	if(User.isSU) {
+		menuAdmin(User);
+	}
 }
