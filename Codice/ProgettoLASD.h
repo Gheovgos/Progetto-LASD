@@ -1,21 +1,26 @@
 #include <liste.h>
+#include <string.h>
+#include <stdlib.h>
+//#include <lasd.h>
 
 /*FILE HEADER DI DEFINIZIONE UTENTE, STRUTTURE DATI E FUNZIONI*/
+/*GIORGIO LONGOBARDO N86003571*/
 
 //Definizione di Utente
 typedef struct User{
 	char username[50]; 
 	char password[50]; 
 	float saldo;
-	int isSU; //indica se è un Super User (Admin)
+	int isSU; //indica se è un Super User (1 se admin, 0 altrimenti)
 	//nodiAlbero carrello;
 }utente;
 
 //Definizione di un prodotto
 typedef struct Prodotto{
-	char nomeProdotto[50]; 
+	char nomeProdotto[200]; 
 	float costo;
 	int taglia;
+	int isAv; // indica se un determinato prodotto sia disponibile (0 se non disponibile, 1 altrimenti)
 	utente inAttesa[]; //allocazione dinamica di un vettore utenti che attendono un determinato prodotto di una determinata taglia
 }prodotto;
 
@@ -26,9 +31,330 @@ typedef struct ABR{
 	struct ABR* sx;
 }ABRprodotti;
 
+/*        PROTOTIPI FUNZIONE        */
 
-int login(utente *User, char *usernm, char *psswd, int SU); //Funzione di accesso di un Utente
-void singup(); //funzione di registrazione di un utente
+utente login(); //Funzione di accesso di un Utente
+utente signup(); //funzione di registrazione di un utente
+void menuAdmin(utente User); //funzione che mostra le opzioni possibili per un amministratore
+void menuUtente(utente User); //funzione che mostra le opzioni possibili per un utente
+void aggiungiProdotto(ABRprodotti **ABR, float c); //funzione che aggiunge un prodotto (nodo) nell'albero dei prodotti
+void mostraProdotti(ABRprodotti *ABR); //visita in preordine dell'albero binario
+ABRprodotti* caricaProdotti(ABRprodotti *ABR); //carica in memoria i nodi di un ABR da un file di testo
+
+
+
+/*          DEFINIZIONE FUNZIONI           */
+
+utente login() {
+	utente User;
+	FILE *f;
+	char stringa[100], usernm[50], psswd[50];
+	int c = 0, su;
+	
+	printf("Inserire username: ");
+	fflush(stdin);
+	gets(usernm);
+	
+	printf("Inserire password: ");
+	fflush(stdin);
+	gets(psswd);
+	
+	for(int i = 0; usernm[i] != '\0'; i++) {
+		stringa[c] = usernm[i];
+		c++;
+	}
+	for(int i = 0; psswd[i] != '\0'; i++) {
+		stringa[c] = psswd[i];
+		c++;
+	}
+	c = 0;
+	
+	f = fopen("utenti.txt", "r");
+	if(f == NULL) {
+		printf("File di testo non trovato!");
+		return User;
+	}
+	
+	while(!feof(f)) {
+		char tmp[100];
+		fscanf(f, "%s\n", &tmp);
+		fscanf(f, "%d\n", &su);
+		
+		if(!strcmp(tmp, stringa)) {
+			
+			strcpy(User.username, usernm);
+			strcpy(User.password, psswd);
+			User.saldo = 1000;
+			User.isSU = su;
+			fclose(f);
+			printf("Login effettuato con successo!\n");
+			return User;
+			
+		}	
+	}
+	
+	printf("Utente non trovato!\n");
+	fclose(f);
+	return User;
+}
+
+utente signup() {
+	utente User;
+	FILE *f, *fp;
+	char stringa[100], usernm[50], psswd[50];
+	int c = 0, su;
+	
+	printf("Inserire username: ");
+	fflush(stdin);
+	gets(usernm);
+	
+	printf("Inserire password: ");
+	fflush(stdin);
+	gets(psswd);
+	
+	for(int i = 0; usernm[i] != '\0'; i++) {
+		stringa[c] = usernm[i];
+		c++;
+	}
+	for(int i = 0; psswd[i] != '\0'; i++) {
+		stringa[c] = psswd[i];
+		c++;
+	}
+	c = 0;
+	
+	
+	f = fopen("utenti.txt", "a");
+	fp = fopen("utenti.txt", "r");
+	if(f == NULL) {
+		printf("File di testo non trovato!");
+		return User;
+	}
+	
+	/*while(!feof(fp)) {
+		char tmp[100];
+		fscanf(f, "%s\n", &tmp);
+		
+		if(!strcmp(tmp, stringa)) {	
+			printf("Username non disponibile!");
+			return User;	
+		}	
+	}
+	fclose(fp);*/
+	
+		
+	printf("\nSei un amministratore?\n\n1 - Si'\n\n0 - No\n\nInserisci valore: ");
+	scanf("%d", &su);
+	
+	while(su != 0 && su != 1) {
+		printf("\nNumero non valido. Inserire scelta: ");
+		scanf("%d", &su);
+	}
+	
+	fprintf(f, "\n%s", stringa);
+	fprintf(f, "\n%d", su);
+	fclose(f);
+	
+	strcpy(User.username, usernm);
+	strcpy(User.password, psswd);
+	User.saldo = 1000;
+	User.isSU = su;
+
+	return User;
+}
+
+void menuAdmin(utente User) {
+	printf("****** MENU AMMINISTRATORE ******\n\n\n");
+	
+	int n, loop = 1, flag;
+	ABRprodotti *ABR = NULL;
+	float c;
+	
+	while(loop) {
+	printf("\nQuale operazione vuole svolgere?\n\n0 - Carica prodotti\n1 - Aggiungi prodotto\n2 - Mostra prodotti\n3 - Aggiorna prodotti\n10 - Logout\n\n\nInserire valore: ");
+	scanf("%d", &n);
+	
+	while(n != 0 && n != 1 && n != 2 && n != 3 && n != 10) {
+		printf("\nNumero non valido. Inserire scelta: ");
+		scanf("%d", &n);
+	}
+	
+	
+		switch(n) {
+		case 0:
+			printf("Hai selezionato carica prodotti");
+			
+			break;
+		case 1:
+			
+			do {
+				printf("Hai selezionato aggiungi prodotto");
+				printf("\nInserire il costo: ");
+				fflush(stdin);
+				scanf("%f", &c);
+				while(c < 0) {
+					printf("\nIl costo non puo' essere negativo!\nInserire un costo valido: ");
+					fflush(stdin);
+					scanf("%f", &c);		
+			}
+			aggiungiProdotto(&ABR, c);
+			
+			printf("Vuoi aggiungere un altro prodotto?\n\n1 - Si\n0 - No\n\nInserisci valore: ");
+			fflush(stdin);
+			scanf("%d", &flag);	
+			while(flag != 0 && flag != 1) {
+					printf("\nInserire un costo valido: ");
+					fflush(stdin);
+					scanf("%d", &flag);		
+				}
+			} while(flag);
+			
+		
+			break;
+		case 2:
+			printf("Hai selezionato mostra prodotti ordinati per prezzo crescente\n");
+			mostraProdotti(ABR);
+			
+			break;
+		case 3:
+			printf("Hai selezionato %d", n);
+			break;
+		case 10:
+			printf("Arrivederci!");
+			loop = 0;
+			system(EXIT_SUCCESS);
+		}
+	}
+}
+
+void aggiungiProdotto(ABRprodotti **ABR, float c) {
+	ABRprodotti *aux;
+	if(*ABR == NULL) {
+		aux = (ABRprodotti*)malloc(sizeof(ABRprodotti));
+		if(aux) {
+			char stringa[100];
+			FILE* f;
+			int loop = 1, s;
+			
+			printf("Inserire il nome del file sul quale si devono salvare i prodotti: ");
+			gets(stringa);
+			
+				do {
+					printf("\nInserisci il nome del file di testo da caricare: ");
+					gets(nome);
+					f = fopen(stringa, "r");
+					if(f == NULL) {
+						printf("File di testo non trovato! Vuoi creare un file di testo con un nome uguale?\n\n1 - Si\n0 - No\n\nInserisci valore: ");
+						scanf("%d", &s);
+						while(s != 0 && s != 1) {
+							printf("Valore inserito non valido!\nInserire un valore valido: ");
+							scanf("%d", &s);
+						}
+						
+					if(s) {
+						f = fopen(stringa, "w"); loop = 0;}
+					}
+					else {
+						f = fopen(stringa, "r");
+						
+						if(f != NULL)
+						loop = 0;	
+					}
+						
+						
+				}while(loop);
+		
+			
+			aux->prodottoN.costo = c;
+			fprintf(f, "%f\n", c);
+			printf("\nAggiungi il nome del prodotto: ");
+			fflush(stdin);
+			gets(aux->prodottoN.nomeProdotto);
+			fprintf(f, "%s\n", aux->prodottoN.nomeProdotto);
+		
+		
+			printf("\nInserire la taglia: ");
+			fflush(stdin);
+			scanf("%d", &aux->prodottoN.taglia);
+			fprintf(f, " %d\n", aux->prodottoN.nomeProdotto);
+			
+			
+			printf("Il prodotto e' gia' disponibile?\n\n1 - Si\n0 - No\n\nInserisci valore: ");
+			scanf("%d", &aux->prodottoN.isAv);
+			fprintf(f, "%d", aux->prodottoN.isAv);
+			while(aux->prodottoN.isAv != 0 && aux->prodottoN.isAv != 1) {
+					printf("\nInserire un valore valido: ");
+					fflush(stdin);
+					scanf("%d", &aux->prodottoN.isAv);	
+					fprintf(f, "%d", aux->prodottoN.isAv);	
+				}
+			
+			aux->sx=NULL;
+			aux->dx=NULL;
+			*ABR=aux;	
+		}
+		
+	}
+	else if((*ABR)->prodottoN.costo > c) 	aggiungiProdotto(&(*ABR)->sx, c);
+	else if((*ABR)->prodottoN.costo < c) 	aggiungiProdotto(&(*ABR)->dx, c);
+	
+}
+
+void mostraProdotti(ABRprodotti *ABR) {
+	if(ABR) {
+		mostraProdotti(ABR->sx);
+		printf("%s %.2f \n", ABR->prodottoN.nomeProdotto, ABR->prodottoN.costo);	
+		mostraProdotti(ABR->dx);
+	}	
+}
+
+ABRprodotti* caricaProdotti(ABRprodotti *ABR) {
+	char nome[100];
+	FILE *f;
+	int s, loop = 1;
+	
+	do {
+		printf("\nInserisci il nome del file di testo da caricare: ");
+		gets(nome);
+		f = fopen(nome, "r");
+		if(f == NULL) {
+			printf("File di testo non trovato! Vuoi creare un file di testo con un nome uguale?\n\n1 - Si\n0 - No\n\nInserisci valore: ");
+			scanf("%d", &s);
+			while(s != 0 && s != 1) {
+				printf("Valore inserito non valido!\nInserire un valore valido: ");
+				scanf("%d", &s);
+			}
+		if(s) {
+			f = fopen(nome, "w"); loop = 0;	
+		}
+		else {
+			f = fopen(stringa, "r");
+						
+			if(f != NULL)
+				loop = 0;	
+		}
+	  }	
+	}while(loop);
+	
+	
+}
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
