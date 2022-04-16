@@ -1,8 +1,24 @@
+
+stranieriprogettolasd
+ 1
+ 1000.000000
+
 giovgioprogettolasd
-1
+ 1
+ 1000.000000
+
 GiandreottiDemocraziaCristiana
-0
+ 0
+ 370.000000
+
 domipatataviola
-0
+ 0
+ 789.000000
+
 ammirenzopalestra123
-0
+ 0
+ 980.000000
+
+utentenormale
+ 0
+ 570.000000

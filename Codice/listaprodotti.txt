@@ -1,0 +1,4 @@
+versace.txt
+nuovoFile.txt
+nuovoFile2.txt
+eliminaProdotti.txt
